@@ -1,3 +1,7 @@
+
+### This is the trojan detector that is submitted to the NIST server. 
+### It takes in a model, example images, a scratch file, and output files, and then outputs a probability of the model being trojan
+
 import os
 import numpy as np
 from scipy import stats
@@ -37,11 +41,11 @@ def trojan_detector(model_filepath, result_filepath, scratch_dirpath, examples_d
 	exemplars = dict()
 	# keep track of misclassification concentrations
 	delta_probs = dict()
-	# keep track of predictions made for each class
+	# keep track of predictions made within each class
 	class_guesses = dict()
 	image_count = 0
 	misclassified = 0
-	# Inference the example images in data
+	# Load the example images
 	fns = [os.path.join(examples_dirpath, fn) for fn in os.listdir(examples_dirpath) if fn.endswith(example_img_format)]
 	random.shuffle(fns)
 	num_examples = 5
@@ -105,7 +109,6 @@ def trojan_detector(model_filepath, result_filepath, scratch_dirpath, examples_d
 		# See how a delta affects classifications of other images within the class
 		guesses = []
 		for j in range(len(fns)):
-			#if j%50==0: print(j)
 			ex2 = fns[j]
 			label2 = [get_class(ex2)]
 			# We want an example from the same class, but a different image
@@ -125,10 +128,8 @@ def trojan_detector(model_filepath, result_filepath, scratch_dirpath, examples_d
 		# Find most common misclassification
 		try:
 			mode = stats.mode(np.array(guesses)[np.array(guesses) != label[0]])[0][0]
-			#print(mode)
 			mode_count = guesses.count(mode)
-			#misclass_count = np.sum(np.array(guesses) != label[0])
-			freq = mode_count # + misclass_count) / 2
+			freq = mode_count
 		except:
 			freq = 0
 		# Calculate and save misclassification concentration
@@ -138,7 +139,7 @@ def trojan_detector(model_filepath, result_filepath, scratch_dirpath, examples_d
 		else:
 			delta_probs[label[0]].append(p)
 	# Calculate misclassification concentration regarding image-specific deltas
-	# max_p is the maximum misclassification concentration
+	# max_p is the maximum of these misclassification concentrations
 	max_p = 0
 	for class_ in class_guesses:
 		guesses = class_guesses[class_]
@@ -162,6 +163,7 @@ def trojan_detector(model_filepath, result_filepath, scratch_dirpath, examples_d
 		quant1.append(np.quantile(delta_probs[prob_list], 0.25))
 	# maximum average misclassification concentration rate for class-wide delta
 	max_mc = np.max(means)
+	# quartiles corresponding to the maximum average misclassification concentration
 	q3 = quant3[means.index(max(means))]
 	q1 = quant1[means.index(max(means))]
 	# misclassification rate for all images
@@ -187,6 +189,7 @@ def get_class(image):
 		label = image[i+6:i+7]
 	return int(label)
 
+# Run
 if __name__ == "__main__":
 	import argparse
 

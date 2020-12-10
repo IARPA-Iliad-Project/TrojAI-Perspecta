@@ -1,3 +1,6 @@
+
+### This file is used to train our binary classifier, and obtain its parameters
+
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import log_loss

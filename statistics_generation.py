@@ -1,6 +1,11 @@
+
+
+### This file is used to generate statistics from the training data, to train our binary classifier on
+### These statistics include different variants of misclassification concentration and misclassification rates as described in README.txt
+
+
 import os
 import numpy as np
-#import pandas as pd
 import skimage.io
 import random
 from scipy import stats
@@ -9,7 +14,6 @@ import torch.nn as nn
 from torch.autograd import Variable
 import warnings
 warnings.filterwarnings("ignore")
-#from PIL import Image
 import copy
 from scipy.ndimage.filters import gaussian_filter
 import time
@@ -17,7 +21,7 @@ import time
 def get_model(start=0, runs=1, num_examples=5):
 	# path of training examples
 	path = "round3-dataset/"
-	# file to save data in
+	# file to save statistics in
 	f = open('classification_stats.csv','wb')
 	content = np.empty((0,6))
 	# blurring convolution kernel size
@@ -49,7 +53,7 @@ def get_model(start=0, runs=1, num_examples=5):
 			exemplars = dict()
 			# keep track of misclassification concentrations
 			delta_probs = dict()
-			# keep track of predictions made for each class
+			# keep track of predictions made within each class
 			class_guesses = dict()
 			random.shuffle(exs)
 			image_count = 0
@@ -145,7 +149,7 @@ def get_model(start=0, runs=1, num_examples=5):
 					delta_probs[label[0]].append(p)
 
 			# Calculate misclassification concentration regarding image-specific deltas
-			# max_p is the maximum misclassification concentration
+			# max_p is the maximum of these misclassification concentrations
 			max_p = 0
 			for class_ in class_guesses:
 				guesses = class_guesses[class_]
