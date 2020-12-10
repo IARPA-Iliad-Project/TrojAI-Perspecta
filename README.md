@@ -20,6 +20,7 @@ We are currently using 5 statistics in our method.
   * Image-specific delta maximum misclassification concentration - The same as above except when image-specific deltas are used instead of a common delta
   * 1Q-MMC - From the clas with the maximum misclassification concentration, instead of taking the average misclassification concentration across the 5 representatives, we take the 1st quartile. This may be more robust to outliers
   * 3Q-MMC - Same as above but with 3rd quartile
+  
 To run the statistic generation, simply run the following code in an enviornment that meets our dependency requirements
 ```
 python3 statistics_generation.py
