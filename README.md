@@ -20,10 +20,21 @@ We are currently using 5 statistics in our method.
 * Image-specific delta maximum misclassification concentration - The same as above except when image-specific deltas are used instead of a common delta
 * 1Q-MMC - From the clas with the maximum misclassification concentration, instead of taking the average misclassification concentration across the 5 representatives, we take the 1st quartile. This may be more robust to outliers
 * 3Q-MMC - Same as above but with 3rd quartile
+To run the statistic generation, simply run the following code in an enviornment that meets our dependency requirements
+```
+python3 statistics_generation.py
+```
 ### Training the Classifier (regression_weights.py)
 Once we have obtained statistics from our training data and have saved it as classification_stats.csv, we train a logistic regression model on it. We split it into a training and test set to get a sense of its generalizability, and print some metrics. We then obtain the regression model's parameters.
+```
+python3 regression_weights.py
+```
 ### Evaluation (trojan_detector.py)
 trojan_detector.py pre-processes data, obtains deltas, and computes statistics as was done in statistic_generation.py. It then uses the parameters from the trained classifier to produce a probability of the model being trojan. This is the file submitted to the NIST server for evaluation. When it was submitted and evaluated on a set of 288 models, it produced a ROC-AUC of 0.7138 and cross entropy of 0.6207.
+```
+python3 trojan_detector.py --model_filepath=./model.pt --result_filepath=./output.txt --scratch_dirpath=./scratch --examples_dirpath=./example
+```
+To run, set the above directories and files to match your local configuration
 ### Discussion
 When looking at our results split by trigger-type (polygon vs instagram filter), we noticed that while our method performs reasonably well on polygon triggers (test cross-entropy of 0.52) it failed on instagram filter triggers (test cross-entropy of 0.73). We are therefore now moving in a direction to deal with instagram-triggered models by building a new type of quasi-trigger that expolits the different image-wide effects you would observe in an instagram filter. In regards to polygon triggers, we hope to improve results by building smarter quasi-triggers. For example, replacing our uniform deltas with a delta that targets certain pixels more than others.
 ### Dependencies
