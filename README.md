@@ -1,2 +1,2 @@
-# TrojAI-Perspecta
+# Trojan-Sleuth
 Discover trojan-infected models
