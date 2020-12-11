@@ -1,5 +1,4 @@
 
-
 ### This file is used to generate statistics from the training data, to train our binary classifier on
 ### These statistics include different variants of misclassification concentration and misclassification rates as described in README.txt
 
@@ -18,14 +17,14 @@ import copy
 from scipy.ndimage.filters import gaussian_filter
 import time
 
-def get_model(start=0, runs=1, num_examples=5):
+def get_model(num_examples=5, kernel_size=9, sigma=5, eps=0.3, end=400):
 	# path of training examples
 	path = "round3-dataset/"
-	# file to save statistics in
+	# file to save data in
 	f = open('classification_stats.csv','wb')
 	content = np.empty((0,6))
 	# blurring convolution kernel size
-	k_size = 9
+	k_size = kernel_size
 	# padding size to keep image size the same
 	pad = (k_size-1)//2
 	# blurring convolution
@@ -33,12 +32,11 @@ def get_model(start=0, runs=1, num_examples=5):
 	# Gaussian weights for Gaussian blurring
 	with torch.no_grad():
 		conv.weight.data = torch.ones(conv.weight.data.shape)/(k_size**2)
-		generated_filters = gaussian_filter(conv.weight.data, sigma=5)
+		generated_filters = gaussian_filter(conv.weight.data, sigma=sigma)
 		conv.weight.data.copy_(torch.from_numpy(generated_filters))
 	# Iterate through training models
 	for i, folder in enumerate(sorted(os.listdir(path))):
 		if i%50 == 0: print(folder)
-		if i<start: continue
 		# Load model, images, and label
 		model_path = path+folder+"/model.pt"
 		model = torch.load(model_path, map_location=torch.device('cuda'))
@@ -48,12 +46,12 @@ def get_model(start=0, runs=1, num_examples=5):
 		conv.to("cuda")
 		# Add blurring as a pre-processing step to the CNN
 		model_blur = nn.Sequential(conv, model)
-		for m in range(runs):
+		if i < end:
 			# keep track of how many of each class we've seen
 			exemplars = dict()
 			# keep track of misclassification concentrations
 			delta_probs = dict()
-			# keep track of predictions made within each class
+			# keep track of predictions made for each class
 			class_guesses = dict()
 			random.shuffle(exs)
 			image_count = 0
@@ -90,7 +88,7 @@ def get_model(start=0, runs=1, num_examples=5):
 				# get signed gradient
 				signed_grad = torch.sign(gradient)
 				
-				epsilon = 0.3
+				epsilon = eps
 				# create delta (quasi-trigger)
 				delta_x = epsilon * signed_grad
 				batch_data = batch_data + delta_x
@@ -149,7 +147,7 @@ def get_model(start=0, runs=1, num_examples=5):
 					delta_probs[label[0]].append(p)
 
 			# Calculate misclassification concentration regarding image-specific deltas
-			# max_p is the maximum of these misclassification concentrations
+			# max_p is the maximum misclassification concentration
 			max_p = 0
 			for class_ in class_guesses:
 				guesses = class_guesses[class_]
@@ -189,6 +187,6 @@ def get_class(image):
 
 # Run statistic generation
 if __name__ == "__main__":
-	get_model(start=0, num_examples=5)
+	get_model(num_examples=5, eps=0.3)
 
 
